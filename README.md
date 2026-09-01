@@ -27,12 +27,12 @@ Kalau dosen memperbaiki sesuatu di pertemuan yang sudah dirilis (mis. ada bug di
 Bagian di bawah ini **isi bertahap** sesuai level yang sedang kalian kerjakan (lihat `pertemuan-01/SOAL.md`) — heading-nya dicek otomatis, jangan diganti namanya.
 
 ## Identitas
-- Nama: (tulis di sini)
-- NRP: (tulis di sini)
-- Kelas: (tulis di sini)
+- Nama: Ledwino Galih Wandanu
+- NRP: 5053241017
+- Kelas: M (RPL)
 
 ## Commit vs Push
-(tulis di sini)
+Git Commit merupakan intruksi untuk menyimpan perubahan pada kode/file tetapi hanya tersimpan di storage lokal sedangan git push untuk menyimpan ke repository github, jika seseorang lupa git push hanya git commit maka rekan setimnya tidak akan menerima perubahan yang sudah dibuat oleh seseoran itu dan hanya menampilkan kode yang terakhir tersimpan di repo github .
 
 ## Reproducibility
 (tulis di sini)
