@@ -35,7 +35,7 @@ Bagian di bawah ini **isi bertahap** sesuai level yang sedang kalian kerjakan (l
 Git Commit merupakan intruksi untuk menyimpan perubahan pada kode/file tetapi hanya tersimpan di storage lokal sedangan git push untuk menyimpan ke repository github, jika seseorang lupa git push hanya git commit maka rekan setimnya tidak akan menerima perubahan yang sudah dibuat oleh seseoran itu dan hanya menampilkan kode yang terakhir tersimpan di repo github .
 
 ## Reproducibility
-Reproducibility adalah program yang sama harus menghasilkan perilaku yang sama ,di komputer siapapun dan kapan pun di run
+Reproducibility dalam versi go adalah program yang sama harus menghasilkan perilaku yang sama ,di komputer siapapun dan kapan pun di run
 
 ## Catatan Merge Conflict
 (tulis di sini)
