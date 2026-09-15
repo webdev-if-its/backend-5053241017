@@ -49,7 +49,7 @@ func LihatTugas(toko *TokoTugas, id int) (Task, error) {
 			return tugas, nil
 		}
 	}
-	panic("belum diimplementasikan")
+	return Task{}, ErrTugasTidakDitemukan
 }
 
 func HapusTugas(toko *TokoTugas, id int) error {
