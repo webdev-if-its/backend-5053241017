@@ -53,6 +53,13 @@ func LihatTugas(toko *TokoTugas, id int) (Task, error) {
 }
 
 func HapusTugas(toko *TokoTugas, id int) error {
+	for i := 0; i < len(toko.Daftar); i++ {
+		tugas := toko.Daftar[i]
+		if tugas.ID == id {
+			toko.Daftar = append(toko.Daftar[:i], toko.Daftar[i+1:]...)
+			return nil
+		}
+	}
 	panic("belum diimplementasikan")
 }
 
