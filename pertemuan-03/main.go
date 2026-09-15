@@ -60,7 +60,7 @@ func HapusTugas(toko *TokoTugas, id int) error {
 			return nil
 		}
 	}
-	panic("belum diimplementasikan")
+	return ErrTugasTidakDitemukan
 }
 
 // HapusTugasTercatat memanggil HapusTugas, lalu memakai defer untuk
