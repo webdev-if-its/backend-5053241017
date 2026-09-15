@@ -44,6 +44,11 @@ func TambahTugas(toko *TokoTugas, judul string) (Task, error) {
 }
 
 func LihatTugas(toko *TokoTugas, id int) (Task, error) {
+	for _, tugas := range toko.Daftar {
+		if tugas.ID == id {
+			return tugas, nil
+		}
+	}
 	panic("belum diimplementasikan")
 }
 
