@@ -55,12 +55,20 @@ func JalankanN(n int, fn func(i int)) {
 
 // Unduh mensimulasikan satu unduhan. (Level 3)
 func Unduh(f File) Hasil {
-	panic("belum diimplementasikan")
+	if f.UkuranKB <= 0 {
+		return Hasil{f.Nama, f.UkuranKB, ErrUkuranTidakValid}
+	}
+	time.Sleep(f.Durasi)
+	return Hasil{f.Nama, f.UkuranKB, nil}
 }
 
 // UnduhBerurutan mengunduh file satu per satu -- pembanding. (Level 3)
 func UnduhBerurutan(files []File) []Hasil {
-	panic("belum diimplementasikan")
+	hasil := make([]Hasil, len(files))
+	for i, f := range files {
+		hasil[i] = Unduh(f)
+	}
+	return hasil
 }
 
 // UnduhSemua mengunduh semua file BERSAMAAN dengan sync.WaitGroup dan
