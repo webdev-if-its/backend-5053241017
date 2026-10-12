@@ -95,7 +95,20 @@ func UnduhSemua(files []File, unduh Pengunduh) []Hasil {
 // UnduhKeChannel mengunduh semua file bersamaan dan mengirim tiap hasil ke
 // channel begitu selesai; channel ditutup setelah semuanya selesai. (Level 7)
 func UnduhKeChannel(files []File, unduh Pengunduh) <-chan Hasil {
-	panic("belum diimplementasikan")
+	ch := make(chan Hasil)
+	var wg sync.WaitGroup
+	for _, f := range files {
+		wg.Add(1)
+		go func(f File) {
+			defer wg.Done()
+			ch <- unduh(f)
+		}(f)
+	}
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+	return ch
 }
 
 // UnduhBatas seperti UnduhSemua tapi paling banyak `maks` unduhan berjalan
