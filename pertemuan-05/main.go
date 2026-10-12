@@ -114,7 +114,23 @@ func UnduhKeChannel(files []File, unduh Pengunduh) <-chan Hasil {
 // UnduhBatas seperti UnduhSemua tapi paling banyak `maks` unduhan berjalan
 // pada saat yang sama. (Level 8)
 func UnduhBatas(files []File, unduh Pengunduh, maks int) ([]Hasil, error) {
-	panic("belum diimplementasikan")
+	if maks < 1 {
+		return nil, ErrBatasTidakValid
+	}
+	hasil := make([]Hasil, len(files))
+	sem := make(chan struct{}, maks)
+	var wg sync.WaitGroup
+	for i, f := range files {
+		wg.Add(1)
+		go func(i int, f File) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			hasil[i] = unduh(f)
+		}(i, f)
+	}
+	wg.Wait()
+	return hasil, nil
 }
 
 // GabungChannel menggabungkan banyak channel menjadi satu (fan-in); channel
