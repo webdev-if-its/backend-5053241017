@@ -136,7 +136,22 @@ func UnduhBatas(files []File, unduh Pengunduh, maks int) ([]Hasil, error) {
 // GabungChannel menggabungkan banyak channel menjadi satu (fan-in); channel
 // hasil ditutup setelah SEMUA channel masukan tertutup. (Level 9)
 func GabungChannel(chs ...<-chan Hasil) <-chan Hasil {
-	panic("belum diimplementasikan")
+	out := make(chan Hasil)
+	var wg sync.WaitGroup
+	for _, c := range chs {
+		wg.Add(1)
+		go func(c <-chan Hasil) {
+			defer wg.Done()
+			for h := range c {
+				out <- h
+			}
+		}(c)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
 
 // Ringkasan adalah potret progres unduhan. (Level 10)
