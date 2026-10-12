@@ -74,7 +74,22 @@ func UnduhBerurutan(files []File) []Hasil {
 // UnduhSemua mengunduh semua file BERSAMAAN dengan sync.WaitGroup dan
 // mengembalikan hasilnya SESUAI URUTAN files. (Level 4-6)
 func UnduhSemua(files []File, unduh Pengunduh) []Hasil {
-	panic("belum diimplementasikan")
+	hasil := make([]Hasil, len(files))
+	var wg sync.WaitGroup
+	for i, f := range files {
+		wg.Add(1)
+		go func(i int, f File) {
+			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					hasil[i] = Hasil{f.Nama, f.UkuranKB, fmt.Errorf("panic: %v", r)}
+				}
+			}()
+			hasil[i] = unduh(f)
+		}(i, f)
+	}
+	wg.Wait()
+	return hasil
 }
 
 // UnduhKeChannel mengunduh semua file bersamaan dan mengirim tiap hasil ke
