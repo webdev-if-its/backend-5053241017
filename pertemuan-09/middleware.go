@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"mime"
 	"net/http"
 	"runtime/debug"
 	"time"
@@ -81,7 +82,20 @@ func Recover(next http.Handler) http.Handler {
 // RequireJSON menolak POST/PUT/PATCH yang Content-Type-nya bukan
 // application/json dengan 415. (Level 9)
 func RequireJSON(next http.Handler) http.Handler {
-	panic("belum diimplementasikan")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost, http.MethodPut, http.MethodPatch:
+			ct := r.Header.Get("Content-Type")
+			mediaType, _, err := mime.ParseMediaType(ct)
+			if err != nil || mediaType != "application/json" {
+				writeJSON(w, http.StatusUnsupportedMediaType, errorBody{
+					Error: "Content-Type harus application/json",
+				})
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // NewHandler menyusun API + seluruh middleware menjadi satu http.Handler yang

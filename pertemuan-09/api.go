@@ -7,9 +7,11 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // maxBodyBytes adalah batas ukuran body request. (Nilai kecil sengaja dipakai
@@ -88,8 +90,23 @@ func parseID(w http.ResponseWriter, r *http.Request) (int, bool) {
 // (*json.UnmarshalTypeError) -> 400. Pesan persisnya ada di SOAL.md.
 func decodeInput(w http.ResponseWriter, r *http.Request) (taskInput, bool) {
 	var in taskInput
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		writeJSON(w, http.StatusBadRequest, errorBody{Error: "body bukan JSON yang valid"})
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&in); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		var unmarshalTypeErr *json.UnmarshalTypeError
+		switch {
+		case errors.As(err, &maxBytesErr):
+			writeJSON(w, http.StatusRequestEntityTooLarge, errorBody{Error: "body terlalu besar"})
+		case strings.HasPrefix(err.Error(), "json: unknown field"):
+			writeJSON(w, http.StatusBadRequest, errorBody{Error: "body mengandung field yang tidak dikenal"})
+		case errors.As(err, &unmarshalTypeErr):
+			msg := fmt.Sprintf("field %q harus bertipe %s", unmarshalTypeErr.Field, unmarshalTypeErr.Type.String())
+			writeJSON(w, http.StatusBadRequest, errorBody{Error: msg})
+		default:
+			writeJSON(w, http.StatusBadRequest, errorBody{Error: "body bukan JSON yang valid"})
+		}
 		return in, false
 	}
 	return in, true
