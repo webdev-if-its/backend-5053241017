@@ -56,7 +56,13 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 // pakai errors.As supaya error yang dibungkus tetap terbaca) -> status 400,
 // body {"error":"validasi gagal","detail":{...}}.
 func writeError(w http.ResponseWriter, err error) {
+	var ve *ValidationError
 	switch {
+	case errors.As(err, &ve):
+		writeJSON(w, http.StatusBadRequest, errorBody{
+			Error:  "validasi gagal",
+			Detail: ve.Fields,
+		})
 	case errors.Is(err, ErrTugasTidakDitemukan):
 		writeJSON(w, http.StatusNotFound, errorBody{Error: "tugas tidak ditemukan"})
 	case errors.Is(err, ErrInputKosong):
@@ -100,6 +106,10 @@ func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if err := ValidasiTugas(in); err != nil {
+		writeError(w, err)
+		return
+	}
 	t, err := a.store.Add(Task{Judul: in.Judul, Selesai: in.Selesai})
 	if err != nil {
 		writeError(w, err)
@@ -129,6 +139,10 @@ func (a *API) updateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	in, ok := decodeInput(w, r)
 	if !ok {
+		return
+	}
+	if err := ValidasiTugas(in); err != nil {
+		writeError(w, err)
 		return
 	}
 	t, err := a.store.Update(Task{ID: id, Judul: in.Judul, Selesai: in.Selesai})
