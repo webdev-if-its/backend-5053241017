@@ -154,7 +154,28 @@ func (s *PostgresStore) List() ([]Task, error) {
 
 // Update mengganti judul dan status selesai tugas ber-ID t.ID. (Level 5)
 func (s *PostgresStore) Update(t Task) (Task, error) {
-	panic("belum diimplementasikan")
+	t.Judul = strings.TrimSpace(t.Judul)
+	if t.Judul == "" {
+		return Task{}, ErrInputKosong
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	res, err := s.db.ExecContext(ctx, `UPDATE tasks SET judul = $1, selesai = $2 WHERE id = $3`, t.Judul, t.Selesai, t.ID)
+	if err != nil {
+		return Task{}, fmt.Errorf("update task: %w", err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return Task{}, fmt.Errorf("update task rows affected: %w", err)
+	}
+	if n == 0 {
+		return Task{}, ErrTugasTidakDitemukan
+	}
+
+	return t, nil
 }
 
 // TambahBanyak menyimpan banyak tugas sekaligus memakai satu prepared
