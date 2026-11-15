@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -109,12 +110,46 @@ func (s *PostgresStore) Add(t Task) (Task, error) {
 
 // Get mengambil satu tugas menurut ID. (Level 4)
 func (s *PostgresStore) Get(id int) (Task, error) {
-	panic("belum diimplementasikan")
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var t Task
+	err := s.db.QueryRowContext(ctx, `SELECT id, judul, selesai FROM tasks WHERE id = $1`, id).Scan(&t.ID, &t.Judul, &t.Selesai)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Task{}, ErrTugasTidakDitemukan
+		}
+		return Task{}, fmt.Errorf("get task: %w", err)
+	}
+
+	return t, nil
 }
 
 // List mengambil semua tugas berurutan menurut ID. (Level 4)
 func (s *PostgresStore) List() ([]Task, error) {
-	panic("belum diimplementasikan")
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, `SELECT id, judul, selesai FROM tasks ORDER BY id`)
+	if err != nil {
+		return nil, fmt.Errorf("list tasks: %w", err)
+	}
+	defer rows.Close()
+
+	tasks := []Task{}
+	for rows.Next() {
+		var t Task
+		if err := rows.Scan(&t.ID, &t.Judul, &t.Selesai); err != nil {
+			return nil, fmt.Errorf("scan task: %w", err)
+		}
+		tasks = append(tasks, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows err: %w", err)
+	}
+
+	return tasks, nil
 }
 
 // Update mengganti judul dan status selesai tugas ber-ID t.ID. (Level 5)
