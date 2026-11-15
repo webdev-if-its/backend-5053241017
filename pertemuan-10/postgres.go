@@ -181,7 +181,52 @@ func (s *PostgresStore) Update(t Task) (Task, error) {
 // TambahBanyak menyimpan banyak tugas sekaligus memakai satu prepared
 // statement. (Level 6 -- atomik di Level 8)
 func (s *PostgresStore) TambahBanyak(judul []string) ([]Task, error) {
-	panic("belum diimplementasikan")
+	if len(judul) == 0 {
+		return []Task{}, nil
+	}
+
+	cleaned := make([]string, len(judul))
+	for i, j := range judul {
+		c := strings.TrimSpace(j)
+		if c == "" {
+			return nil, ErrInputKosong
+		}
+		cleaned[i] = c
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `INSERT INTO tasks (judul) VALUES ($1) RETURNING id`)
+	if err != nil {
+		return nil, fmt.Errorf("prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	tasks := make([]Task, 0, len(cleaned))
+	for _, j := range cleaned {
+		var id int
+		if err := stmt.QueryRowContext(ctx, j).Scan(&id); err != nil {
+			return nil, fmt.Errorf("insert task: %w", err)
+		}
+		tasks = append(tasks, Task{
+			ID:      id,
+			Judul:   j,
+			Selesai: false,
+		})
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit tx: %w", err)
+	}
+
+	return tasks, nil
 }
 
 // Delete menghapus tugas dan mencatat aksinya ke task_logs DALAM SATU
