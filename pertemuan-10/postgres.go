@@ -232,5 +232,36 @@ func (s *PostgresStore) TambahBanyak(judul []string) ([]Task, error) {
 // Delete menghapus tugas dan mencatat aksinya ke task_logs DALAM SATU
 // TRANSAKSI. (Level 7-8)
 func (s *PostgresStore) Delete(id int) error {
-	panic("belum diimplementasikan")
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM tasks WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("delete task: %w", err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("delete task rows affected: %w", err)
+	}
+	if n == 0 {
+		return ErrTugasTidakDitemukan
+	}
+
+	_, err = tx.ExecContext(ctx, `INSERT INTO task_logs (task_id, aksi) VALUES ($1, 'hapus')`, id)
+	if err != nil {
+		return fmt.Errorf("insert task log: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit tx: %w", err)
+	}
+
+	return nil
 }
