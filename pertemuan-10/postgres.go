@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // mendaftarkan driver "pgx" untuk database/sql
@@ -26,7 +28,24 @@ var dbTimeout = 3 * time.Second
 // Connect membuka pool koneksi ke PostgreSQL dan MEMASTIKAN koneksinya benar-
 // benar bisa dipakai. (Level 1)
 func Connect(dsn string) (*sql.DB, error) {
-	panic("belum diimplementasikan")
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("connect db: %w", err)
+	}
+
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(30 * time.Minute)
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("ping db: %w", err)
+	}
+
+	return db, nil
 }
 
 // PostgresStore adalah TaskStore yang menyimpan data di PostgreSQL.
